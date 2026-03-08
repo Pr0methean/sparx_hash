@@ -2,20 +2,24 @@ use std::hash::Hasher;
 
 pub fn test_unique_hashes<T: Hasher>(hasher_creator: impl Fn() -> T) {
     let mut hashes = std::collections::HashSet::new();
+    hashes.insert(hasher_creator().finish());
     for i in 0..=u8::MAX {
         let mut hasher = hasher_creator();
         hasher.write_u8(i);
-        assert!(hashes.insert(hasher.finish()));
+        let hash = hasher.finish();
+        assert!(hashes.insert(hash));
     }
     for i in 0..=u16::MAX {
         let mut hasher = hasher_creator();
         hasher.write_u16(i);
-        assert!(hashes.insert(hasher.finish()));
+        let hash = hasher.finish();
+        assert!(hashes.insert(hash));
     }
     for i in 0..=(1 << 24) {
         let mut hasher = hasher_creator();
         hasher.write_u32(i);
-        assert!(hashes.insert(hasher.finish()));
+        let hash = hasher.finish();
+        assert!(hashes.insert(hash));
     }
 }
 
