@@ -45,6 +45,14 @@ impl From<&RandomState> for Sparx256Hasher {
     }
 }
 
+#[cfg(feature = "rand")]
+impl rand::distr::Distribution<Sparx256Hasher> for rand::distr::StandardUniform {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Sparx256Hasher {
+        use rand::RngExt;
+        Sparx256Hasher(rng.random(), rng.random())
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Sparx256HashBuilder(u128, u128);
 
@@ -72,10 +80,10 @@ impl From<&RandomState> for Sparx256HashBuilder {
 
 
 #[cfg(feature = "rand")]
-impl rand::distr::Distribution<Sparx256Hasher> for rand::distr::StandardUniform {
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Sparx256Hasher {
+impl rand::distr::Distribution<Sparx256HashBuilder> for rand::distr::StandardUniform {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Sparx256HashBuilder {
         use rand::RngExt;
-        Sparx256Hasher(rng.random(), rng.random())
+        Sparx256HashBuilder(rng.random(), rng.random())
     }
 }
 

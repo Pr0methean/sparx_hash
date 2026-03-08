@@ -42,13 +42,13 @@ impl Default for Sparx64Hasher {
 
 impl From<&RandomState> for Sparx64Hasher {
     fn from(state: &RandomState) -> Self {
-        Sparx64HasherBuilder::from(state).build_hasher()
+        Sparx64HashBuilder::from(state).build_hasher()
     }
 }
 
-pub struct Sparx64HasherBuilder(u64);
+pub struct Sparx64HashBuilder(u64);
 
-impl BuildHasher for Sparx64HasherBuilder {
+impl BuildHasher for Sparx64HashBuilder {
     type Hasher = Sparx64Hasher;
 
     fn build_hasher(&self) -> Self::Hasher {
@@ -56,17 +56,25 @@ impl BuildHasher for Sparx64HasherBuilder {
     }
 }
 
-impl Default for Sparx64HasherBuilder {
+impl Default for Sparx64HashBuilder {
     fn default() -> Self {
         Self(SPARX64_INIT)
     }
 }
 
-impl From<&RandomState> for Sparx64HasherBuilder {
+impl From<&RandomState> for Sparx64HashBuilder {
     fn from(state: &RandomState) -> Self {
         Self(state.hash_one("Sparx64"))
     }
 }
+
+#[cfg(feature = "rand")]
+impl rand::distr::Distribution<Sparx64HashBuilder> for rand::distr::StandardUniform {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Sparx64HashBuilder {
+        Sparx64HashBuilder(rng.next_u64())
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

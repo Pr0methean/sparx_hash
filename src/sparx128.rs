@@ -46,6 +46,13 @@ impl From<&RandomState> for Sparx128Hasher {
     }
 }
 
+#[cfg(feature = "rand")]
+impl rand::distr::Distribution<Sparx128Hasher> for rand::distr::StandardUniform {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Sparx128Hasher {
+        use rand::RngExt;
+        Sparx128Hasher(rng.random())
+    }
+}
 
 pub struct Sparx128HashBuilder(u128);
 
@@ -70,10 +77,10 @@ impl From<&RandomState> for Sparx128HashBuilder {
 }
 
 #[cfg(feature = "rand")]
-impl rand::distr::Distribution<Sparx128Hasher> for rand::distr::StandardUniform {
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Sparx128Hasher {
+impl rand::distr::Distribution<Sparx128HashBuilder> for rand::distr::StandardUniform {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Sparx128HashBuilder {
         use rand::RngExt;
-        Sparx128Hasher(rng.random())
+        Sparx128HashBuilder(rng.random())
     }
 }
 
