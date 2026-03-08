@@ -36,7 +36,7 @@ impl Hasher for Sparx128Hasher {
 
 impl Hasher128 for Sparx128Hasher {
     fn finish128(&self) -> u128 {
-        self.0 ^ permute_sparx128(self.0.wrapping_add(SPARX128_INIT).reverse_bits())
+        self.0 ^ permute_sparx128(self.0.reverse_bits().wrapping_add(SPARX128_INIT))
     }
 }
 
