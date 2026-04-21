@@ -41,10 +41,10 @@ pub fn test_avalanche<T: Hasher>(hasher_creator: impl Fn() -> T) {
         hasher.write_u128(input);
         let hash = hasher.finish();
         let distance = (hash ^ zero_hash).count_ones();
-        assert!(distance >= MIN_HAMMING_DISTANCE);
+        assert!(distance >= MIN_HAMMING_DISTANCE, "Distance for 1<<{i} vs 0 too small: {distance}");
         total_distance += distance;
         let distance = (hash ^ empty_hash).count_ones();
-        assert!(distance >= MIN_HAMMING_DISTANCE);
+        assert!(distance >= MIN_HAMMING_DISTANCE, "Distance for 1<<{i} vs empty too small: {distance}");
         total_distance += distance;
     }
     let average_distance = total_distance as f64 / 257.0;
