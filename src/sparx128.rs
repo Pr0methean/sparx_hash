@@ -4,6 +4,7 @@ use digest::typenum::U16;
 
 pub const SPARX128_INIT: u128 = 0xf39cc0605cedc834_1082276bf3a27251;
 
+#[inline(always)]
 pub fn permute_sparx128(input: u128) -> u128 {
     let count1 = input.count_ones();
     let input_rotated = input.rotate_right(41);

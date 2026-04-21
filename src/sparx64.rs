@@ -5,6 +5,7 @@ use digest::typenum::U8;
 pub const SPARX64_INIT: u64 = 0x9E3779B97F4A7C15;
 pub const SPARX64_FINALIZE: u64 = 0xf86c6a11d0c18e95;
 
+#[inline(always)]
 pub fn permute_sparx64(input: u64) -> u64 {
         let count1 = input.count_ones();
     let input_rotated = input.rotate_left(29);
