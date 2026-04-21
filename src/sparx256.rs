@@ -27,8 +27,8 @@ impl Hasher for Sparx256Hasher {
                 | bytes.next().map(|b| (b as u128).reverse_bits()).unwrap_or(1 << 117);
             let p0 = permute_sparx128(self.0.wrapping_add(input));
             let p1 = permute_sparx128(self.1.rotate_left(59).wrapping_add(other_input));
-            self.0 = self.0.wrapping_add(p1);
             self.1 = self.1 ^ p0;
+            self.0 = self.0.wrapping_add(p1);
         }
     }
 }
