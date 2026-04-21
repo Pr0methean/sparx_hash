@@ -32,7 +32,7 @@ impl Hasher for Sparx64Hasher {
     fn write(&mut self, bytes: &[u8]) {
         let mut bytes = bytes.iter().copied();
         while let Some(byte) = bytes.next() {
-            let input = (byte as u64).reverse_bits() | bytes.next().map(|b| b as u64).unwrap_or(256);
+            let input = (byte as u64).reverse_bits() | bytes.next().map(u64::from).unwrap_or(256);
             self.0 = permute_sparx64(self.0.wrapping_add(input));
         }
     }
