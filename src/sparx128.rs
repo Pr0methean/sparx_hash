@@ -1,19 +1,20 @@
-use std::hash::{BuildHasher, Hasher, RandomState};
+use core::hash::{BuildHasher, Hasher};
 use digest::{FixedOutput, HashMarker, Output, OutputSizeUser, Update};
 use digest::typenum::U16;
 
 pub const SPARX128_INIT: u128 = 0xf39cc0605cedc834_1082276bf3a27251;
 
 pub fn permute_sparx128(input: u128) -> u128 {
-        let count1 = input.count_ones() & 127;
+        let count1 = input.count_ones();
         /* odd increment */
         let inc = ((1u128 << (count1 ^ 61)).wrapping_add((count1 as u128).rotate_left(8)).wrapping_add(input)) | 1;
         let t = input
-            .wrapping_add(inc.rotate_left(29))
-            .wrapping_sub(input.rotate_left(41));
-        t.wrapping_add(inc ^ (1u128 << (count1 ^ 11)))
+            ^ inc.rotate_left(29)
+            .wrapping_sub(input.rotate_right(41));
+        t.wrapping_add(inc)
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Sparx128Hasher(pub(crate) u128);
 
 impl Default for Sparx128Hasher {
@@ -29,8 +30,10 @@ impl Hasher for Sparx128Hasher {
     }
 
     fn write(&mut self, bytes: &[u8]) {
-        for byte in bytes {
-            self.0 = permute_sparx128(self.0.wrapping_add(u128::from(*byte)));
+        let mut bytes = bytes.iter().copied();
+        while let Some(byte) = bytes.next() {
+            let input = (byte as u128).reverse_bits() | bytes.next().map(|b| b as u128).unwrap_or(256);
+            self.0 = permute_sparx128(self.0.wrapping_add(input));
         }
     }
 }
@@ -52,8 +55,9 @@ impl FixedOutput for Sparx128Hasher {
     }
 }
 
-impl From<&RandomState> for Sparx128Hasher {
-    fn from(state: &RandomState) -> Self {
+#[cfg(feature = "std")]
+impl From<&std::hash::RandomState> for Sparx128Hasher {
+    fn from(state: &std::hash::RandomState) -> Self {
         Sparx128HashBuilder::from(state).build_hasher()
     }
 }
@@ -82,8 +86,9 @@ impl Default for Sparx128HashBuilder {
     }
 }
 
-impl From<&RandomState> for Sparx128HashBuilder {
-    fn from(state: &RandomState) -> Self {
+#[cfg(feature = "std")]
+impl From<&std::hash::RandomState> for Sparx128HashBuilder {
+    fn from(state: &std::hash::RandomState) -> Self {
         Self((state.hash_one("Sparx128") as u128) << 64 | state.hash_one("128Sparx") as u128)
     }
 }

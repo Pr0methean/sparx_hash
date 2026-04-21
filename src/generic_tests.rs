@@ -1,25 +1,26 @@
-use std::hash::Hasher;
+use alloc::collections::BTreeSet;
+use core::hash::Hasher;
 
 pub fn test_unique_hashes<T: Hasher>(hasher_creator: impl Fn() -> T) {
-    let mut hashes = std::collections::HashSet::new();
+    let mut hashes = BTreeSet::new();
     hashes.insert(hasher_creator().finish());
     for i in 0..=u8::MAX {
         let mut hasher = hasher_creator();
         hasher.write_u8(i);
         let hash = hasher.finish();
-        assert!(hashes.insert(hash));
+        assert!(hashes.insert(hash), "Hash {hash} of {i} already exists");
     }
     for i in 0..=u16::MAX {
         let mut hasher = hasher_creator();
         hasher.write_u16(i);
         let hash = hasher.finish();
-        assert!(hashes.insert(hash));
+        assert!(hashes.insert(hash), "Hash {hash} of {i} already exists");
     }
     for i in 0..=(1 << 24) {
         let mut hasher = hasher_creator();
         hasher.write_u32(i);
         let hash = hasher.finish();
-        assert!(hashes.insert(hash));
+        assert!(hashes.insert(hash), "Hash {hash} of {i} already exists");
     }
 }
 
@@ -47,7 +48,6 @@ pub fn test_avalanche<T: Hasher>(hasher_creator: impl Fn() -> T) {
         total_distance += distance;
     }
     let average_distance = total_distance as f64 / 257.0;
-    println!("Average distance: {}", average_distance);
     assert!(average_distance >= 31.0);
     assert!(average_distance <= 33.0);
 }

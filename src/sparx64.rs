@@ -1,16 +1,17 @@
-use std::hash::{BuildHasher, Hasher, RandomState};
+use core::hash::{BuildHasher, Hasher};
+use digest::{FixedOutput, HashMarker, Output, OutputSizeUser, Update};
+use digest::typenum::U8;
 
 pub const SPARX64_INIT: u64 = 0x9E3779B97F4A7C15;
 pub const SPARX64_FINALIZE: u64 = 0xf86c6a11d0c18e95;
 
 pub fn permute_sparx64(input: u64) -> u64 {
-        let count1 = input.count_ones() & 127;
+        let count1 = input.count_ones();
         /* odd increment */
         let inc = ((1u64 << (count1 ^ 37)).wrapping_add(input).wrapping_add((count1 as u64).rotate_left(8))) | 1;
         let t = input
-            .wrapping_add(inc.rotate_left(13))
-            .wrapping_sub(input.rotate_left(29));
-        t.wrapping_add(inc ^ (1 << (count1 ^ 7)))
+             ^ inc.rotate_left(13).wrapping_sub(input.rotate_left(29));
+        t.wrapping_add(inc)
 }
 
 #[cfg(feature = "rand")]
@@ -20,6 +21,7 @@ impl rand::distr::Distribution<Sparx64Hasher> for rand::distr::StandardUniform {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Sparx64Hasher(u64);
 
 impl Hasher for Sparx64Hasher {
@@ -28,8 +30,10 @@ impl Hasher for Sparx64Hasher {
     }
 
     fn write(&mut self, bytes: &[u8]) {
-        for byte in bytes {
-            self.0 = permute_sparx64(self.0.wrapping_add(256 + u64::from(*byte)));
+        let mut bytes = bytes.iter().copied();
+        while let Some(byte) = bytes.next() {
+            let input = (byte as u64).reverse_bits() | bytes.next().map(|b| b as u64).unwrap_or(256);
+            self.0 = permute_sparx64(self.0.wrapping_add(input));
         }
     }
 }
@@ -40,8 +44,9 @@ impl Default for Sparx64Hasher {
     }
 }
 
-impl From<&RandomState> for Sparx64Hasher {
-    fn from(state: &RandomState) -> Self {
+#[cfg(feature = "std")]
+impl From<&std::hash::RandomState> for Sparx64Hasher {
+    fn from(state: &std::hash::RandomState) -> Self {
         Sparx64HashBuilder::from(state).build_hasher()
     }
 }
@@ -62,8 +67,25 @@ impl Default for Sparx64HashBuilder {
     }
 }
 
-impl From<&RandomState> for Sparx64HashBuilder {
-    fn from(state: &RandomState) -> Self {
+impl HashMarker for Sparx64Hasher {}
+
+impl OutputSizeUser for Sparx64Hasher { type OutputSize = U8; }
+
+impl Update for Sparx64Hasher {
+    fn update(&mut self, data: &[u8]) {
+        self.write(data);
+    }
+}
+
+impl FixedOutput for Sparx64Hasher {
+    fn finalize_into(self, out: &mut Output<Self>) {
+        out.copy_from_slice(&self.finish().to_le_bytes());
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<&std::hash::RandomState> for Sparx64HashBuilder {
+    fn from(state: &std::hash::RandomState) -> Self {
         Self(state.hash_one("Sparx64"))
     }
 }
