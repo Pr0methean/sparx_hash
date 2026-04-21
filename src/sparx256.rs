@@ -22,9 +22,9 @@ impl Hasher for Sparx256Hasher {
     fn write(&mut self, bytes: &[u8]) {
         let mut bytes = bytes.iter().copied();
         while let Some(byte) = bytes.next() {
-            let input = (byte as u128).reverse_bits() | bytes.next().map(u128::from).unwrap_or(256);
-            let other_input = bytes.next().map(u128::from).unwrap_or(1024)
-                | bytes.next().map(|b| (b as u128).reverse_bits()).unwrap_or(512);
+            let input = (byte as u128).reverse_bits() | bytes.next().map(u128::from).unwrap_or(1 << 13);
+            let other_input = bytes.next().map(u128::from).unwrap_or(1 << 9)
+                | bytes.next().map(|b| (b as u128).reverse_bits()).unwrap_or(1 << 117);
             let p0 = permute_sparx128(self.0.wrapping_add(input));
             let p1 = permute_sparx128(self.1.rotate_left(59).wrapping_add(other_input));
             self.0 = self.0.wrapping_add(p1);
