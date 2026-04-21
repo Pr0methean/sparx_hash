@@ -1,6 +1,7 @@
 use std::hash::{BuildHasher, Hasher, RandomState};
-use crate::{sparx128, Hasher128};
-use crate::sparx128::{Sparx128Hasher, SPARX128_INIT};
+use digest::{FixedOutput, HashMarker, Output, OutputSizeUser, Update};
+use digest::consts::U16;
+use crate::sparx128::{permute_sparx128, Sparx128Hasher, SPARX128_INIT};
 
 #[derive(Clone, Copy)]
 pub struct Sparx256Hasher(u128, u128);
@@ -22,22 +23,32 @@ impl Hasher for Sparx256Hasher {
         let mut bytes = bytes.iter().copied();
         while let Some(byte) = bytes.next() {
             let byte = u128::from(byte);
-            let p0 = sparx128::permute_sparx128(self.0.wrapping_add(byte));
+            let p0 = permute_sparx128(self.0.wrapping_add(byte));
             let other_byte = bytes.next().map(u128::from).unwrap_or(256);
-            let p1 = sparx128::permute_sparx128(self.1.rotate_left(59).wrapping_add(other_byte));
+            let p1 = permute_sparx128(self.1.rotate_left(59).wrapping_add(other_byte));
             self.0 = self.0.wrapping_add(p1);
             self.1 = self.1 ^ p0;
         }
     }
 }
 
-impl Hasher128 for Sparx256Hasher {
-    fn finish128(&self) -> u128 {
-        let mut out_hasher = Sparx128Hasher(self.0);
-        out_hasher.write_u128(self.1);
-        out_hasher.finish128()
+impl Update for Sparx256Hasher {
+    fn update(&mut self, data: &[u8]) {
+        self.write(data);
     }
 }
+
+impl OutputSizeUser for Sparx256Hasher { type OutputSize = U16; }
+
+impl FixedOutput for Sparx256Hasher {
+    fn finalize_into(self, out: &mut Output<Self>) {
+        let mut transform = Sparx128Hasher(self.0);
+        transform.write_u128(self.1);
+        transform.finalize_into(out);
+    }
+}
+
+impl HashMarker for Sparx256Hasher {}
 
 impl From<&RandomState> for Sparx256Hasher {
     fn from(state: &RandomState) -> Self {

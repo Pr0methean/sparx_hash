@@ -1,5 +1,3 @@
-use std::hash::Hasher;
-
 /// The SPARX family of hash functions are named for the operations they use:
 /// * Shift (`<<`)
 /// * Popcount ([u128::count_ones])
@@ -12,7 +10,3 @@ pub mod sparx256;
 pub mod sparx64;
 #[cfg(test)]
 mod generic_tests;
-
-pub trait Hasher128: Hasher {
-    fn finish128(&self) -> u128;
-}

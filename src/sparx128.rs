@@ -1,5 +1,6 @@
 use std::hash::{BuildHasher, Hasher, RandomState};
-use crate::Hasher128;
+use digest::{FixedOutput, HashMarker, Output, OutputSizeUser, Update};
+use digest::typenum::U16;
 
 pub const SPARX128_INIT: u128 = 0xf39cc0605cedc834_1082276bf3a27251;
 
@@ -23,7 +24,7 @@ impl Default for Sparx128Hasher {
 
 impl Hasher for Sparx128Hasher {
     fn finish(&self) -> u64 {
-        let out = self.finish128();
+        let out = self.0 ^ permute_sparx128(self.0.reverse_bits().wrapping_add(SPARX128_INIT));
         out as u64 ^ (out >> 64) as u64
     }
 
@@ -34,9 +35,20 @@ impl Hasher for Sparx128Hasher {
     }
 }
 
-impl Hasher128 for Sparx128Hasher {
-    fn finish128(&self) -> u128 {
-        self.0 ^ permute_sparx128(self.0.reverse_bits().wrapping_add(SPARX128_INIT))
+impl Update for Sparx128Hasher {
+    fn update(&mut self, data: &[u8]) {
+        self.write(data);
+    }
+}
+
+impl HashMarker for Sparx128Hasher {}
+
+impl OutputSizeUser for Sparx128Hasher { type OutputSize = U16; }
+
+impl FixedOutput for Sparx128Hasher {
+    fn finalize_into(self, out: &mut Output<Self>) {
+        let out_u128 = self.0 ^ permute_sparx128(self.0.reverse_bits().wrapping_add(SPARX128_INIT));
+        out.copy_from_slice(&out_u128.to_le_bytes());
     }
 }
 
