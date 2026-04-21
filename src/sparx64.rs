@@ -8,7 +8,7 @@ pub const SPARX64_FINALIZE: u64 = 0xf86c6a11d0c18e95;
 pub fn permute_sparx64(input: u64) -> u64 {
         let count1 = input.count_ones();
         /* odd increment */
-        let inc = ((count1 as u64) << (count1 ^ 37)).wrapping_add(input) | 1;
+        let inc = (((count1 as u64) << (count1 ^ 37)) | 1).wrapping_add(input);
         let t = input
              ^ inc.rotate_left(13).wrapping_sub(input.rotate_left(29));
         t.wrapping_add(inc)
