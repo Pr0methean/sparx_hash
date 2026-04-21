@@ -7,7 +7,8 @@ pub const SPARX128_INIT: u128 = 0xf39cc0605cedc834_1082276bf3a27251;
 pub fn permute_sparx128(input: u128) -> u128 {
     let count1 = input.count_ones();
     let input_rotated = input.rotate_right(41);
-    let inc = (((count1 as u128) << (count1 ^ 61)) | 1).wrapping_add(input);
+    let shift = (count1 ^ 61) & 127;
+    let inc = (((count1 as u128) << shift) | 1).wrapping_add(input);
     let inc_rotated = inc.rotate_left(29);
     let t = input ^ inc_rotated.wrapping_sub(input_rotated);
     t.wrapping_add(inc)
